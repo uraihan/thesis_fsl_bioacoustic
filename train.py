@@ -165,5 +165,5 @@ if __name__ == "__main__":
     print(summary(encoder))
 
     # Launch training
-    # model = train_scl(encoder, train_loader, transform1, transform2, args)
-    model = train_acl(encoder, train_loader, transform1, transform2, args)
+    model = train_scl(encoder, train_loader, transform1, transform2, args)
+    # model = train_acl(encoder, train_loader, transform1, transform2, args)

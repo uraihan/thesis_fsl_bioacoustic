@@ -2,6 +2,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+import args
+
 
 class SupConLoss(
     nn.Module
@@ -29,7 +31,7 @@ class SupConLoss(
 
         contrast_count = features.shape[1]
         contrast_feature = torch.cat(torch.unbind(features, dim=1), dim=0)
-        print(torch.equal(contrast_feature, features_acl))
+        # print(torch.equal(contrast_feature, features_acl))
 
         anchor_dot_contrast = torch.div(
             torch.matmul(contrast_feature, contrast_feature.T), self.temperature
@@ -55,6 +57,9 @@ class SupConLoss(
 
         loss1 = -mean_log_prob_pos
         loss1 = loss1.view(contrast_count, batch_size).mean()
+
+        if args.args.loss == "scl-orig":
+            return loss1
 
         loss2 = amc(self.device, contrast_feature)
 
