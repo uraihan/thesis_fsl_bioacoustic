@@ -60,6 +60,7 @@ def train_scl(encoder, train_loader, transform1, transform2, args):
 
         tr_loss = tr_loss / len(train_iterator)
         print("Average train loss: {}".format(tr_loss))
+        print(f"Train loss history: {loss_hist}")
 
     torch.save({"encoder": encoder.state_dict()}, last_model_path)
 
