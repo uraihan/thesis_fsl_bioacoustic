@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from args import args
 from da import Compander, FreqShift, GaussNoise, MixRandom, RandomCrop, Resize
-from losses import AngConLoss, SupConLoss
+from losses import SupConLoss
 from models import ResNet
 
 
@@ -30,6 +30,7 @@ def train_scl(encoder, train_loader, transform1, transform2, args):
     encoder = encoder.to(args.device)
 
     for epoch in range(1, num_epochs + 1):
+        loss_hist = []
         tr_loss = 0.0
         print("Epoch {}".format(epoch))
         adjust_learning_rate(optim, args.lr, epoch, num_epochs + 1)
@@ -52,6 +53,7 @@ def train_scl(encoder, train_loader, transform1, transform2, args):
             elif args.method == "scl":
                 loss = loss_fn(x_out1, x_out2, y)
             tr_loss += loss.item()
+            loss_hist.append(tr_loss)
 
             loss.backward()
             optim.step()
@@ -66,56 +68,56 @@ def train_scl(encoder, train_loader, transform1, transform2, args):
 
 ## TODO: Implement training with ACL
 ## WIP
-def train_acl(encoder, train_loader, transform1, transform2, args):
-    print(f"Training starting on {args.device}")
-
-    ## Change with ACL class
-    loss_fn = AngConLoss(temperature=args.tau, device=args.device)
-
-    optim = torch.optim.SGD(
-        encoder.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.wd
-    )
-    num_epochs = args.epochs
-
-    ckpt_dir = os.path.join(args.traindir, "../model/")
-    os.makedirs(ckpt_dir, exist_ok=True)
-    last_model_path = os.path.join(ckpt_dir, "ckpt.pth")
-
-    encoder = encoder.to(args.device)
-
-    for epoch in range(1, num_epochs + 1):
-        tr_loss = 0.0
-        print("Epoch {}".format(epoch))
-        adjust_learning_rate(optim, args.lr, epoch, num_epochs + 1)
-        train_iterator = iter(train_loader)
-        for batch in tqdm(train_iterator):
-            optim.zero_grad()
-
-            x, y = batch
-            x = x.to(args.device)
-            y = y.to(args.device)
-
-            x1 = transform1(x)
-            x2 = transform2(x)
-
-            _, x_out1 = encoder(x1)
-            _, x_out2 = encoder(x2)
-
-            if args.method == "ssl":
-                loss = loss_fn(x_out1, x_out2)
-            elif args.method == "scl":
-                loss = loss_fn(x_out1, x_out2, y)
-            tr_loss += loss.item()
-
-            loss.backward()
-            optim.step()
-
-        tr_loss = tr_loss / len(train_iterator)
-        print("Average train loss: {}".format(tr_loss))
-
-    torch.save({"encoder": encoder.state_dict()}, last_model_path)
-
-    return encoder
+# def train_acl(encoder, train_loader, transform1, transform2, args):
+#     print(f"Training starting on {args.device}")
+#
+#     ## Change with ACL class
+#     loss_fn = AngConLoss(temperature=args.tau, device=args.device)
+#
+#     optim = torch.optim.SGD(
+#         encoder.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.wd
+#     )
+#     num_epochs = args.epochs
+#
+#     ckpt_dir = os.path.join(args.traindir, "../model/")
+#     os.makedirs(ckpt_dir, exist_ok=True)
+#     last_model_path = os.path.join(ckpt_dir, "ckpt.pth")
+#
+#     encoder = encoder.to(args.device)
+#
+#     for epoch in range(1, num_epochs + 1):
+#         tr_loss = 0.0
+#         print("Epoch {}".format(epoch))
+#         adjust_learning_rate(optim, args.lr, epoch, num_epochs + 1)
+#         train_iterator = iter(train_loader)
+#         for batch in tqdm(train_iterator):
+#             optim.zero_grad()
+#
+#             x, y = batch
+#             x = x.to(args.device)
+#             y = y.to(args.device)
+#
+#             x1 = transform1(x)
+#             x2 = transform2(x)
+#
+#             _, x_out1 = encoder(x1)
+#             _, x_out2 = encoder(x2)
+#
+#             if args.method == "ssl":
+#                 loss = loss_fn(x_out1, x_out2)
+#             elif args.method == "scl":
+#                 loss = loss_fn(x_out1, x_out2, y)
+#             tr_loss += loss.item()
+#
+#             loss.backward()
+#             optim.step()
+#
+#         tr_loss = tr_loss / len(train_iterator)
+#         print("Average train loss: {}".format(tr_loss))
+#
+#     torch.save({"encoder": encoder.state_dict()}, last_model_path)
+#
+#     return encoder
 
 
 def adjust_learning_rate(optimizer, init_lr, epoch, tot_epochs):
