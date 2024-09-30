@@ -90,12 +90,13 @@ def amc(device, features, labels):
     # print(features.shape)
     # mask = torch.zeros(labels.shape[0], labels.shape[0])
     labels = labels.repeat(2, 1)
-    label_mask = [
-        1 if labels[i] == labels[j] else 0
-        for j in range(len(labels))
-        for i in range(len(labels))
-    ]
-    label_mask = torch.FloatTensor(label_mask).to(device).reshape(features.shape[0], -1)
+    # label_mask = [
+    #     1 if labels[i] == labels[j] else 0
+    #     for j in range(len(labels))
+    #     for i in range(len(labels))
+    # ]
+    # label_mask = torch.FloatTensor(label_mask).to(device).reshape(features.shape[0], -1)
+    label_mask = torch.eq(labels, labels.T)
 
     similarity_matrix = torch.matmul(features, features.T)
 
@@ -141,6 +142,6 @@ def amc(device, features, labels):
     l2 = torch.acos(positives)
     l2 = torch.sum(l2**2)
 
-    loss = (l1 + l2) / 25
+    loss = (l1 + l2) / 50
 
     return loss
