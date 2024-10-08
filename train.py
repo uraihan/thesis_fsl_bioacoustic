@@ -2,7 +2,11 @@ import math
 import os
 
 import h5py
+import pandas as pd
+import seaborn as sns
 import torch
+from matplotlib import pyplot as plt
+from sklearn.manifold import TSNE
 from torch import nn
 from torchinfo import summary
 from tqdm import tqdm
@@ -48,6 +52,8 @@ def train_scl(encoder, train_loader, transform1, transform2, args):
             _, x_out1 = encoder(x1)
             _, x_out2 = encoder(x2)
 
+            visualize_embeddings(x_out1.detach(), x_out2.detach(), y)
+
             # 1. check only angular
             # 2. check values of each angular and contrastive
             # -> findings: angular loss grows quickly and becomes nan after only one
@@ -72,6 +78,8 @@ def train_scl(encoder, train_loader, transform1, transform2, args):
         print("Average train loss: {}".format(tr_loss))
         print(f"Train loss history: {loss_hist}")
 
+        visualize_embeddings(encoder, epoch)
+
     torch.save({"encoder": encoder.state_dict()}, last_model_path)
 
     return encoder
@@ -82,6 +90,25 @@ def adjust_learning_rate(optimizer, init_lr, epoch, tot_epochs):
     cur_lr = init_lr * 0.5 * (1.0 + math.cos(math.pi * epoch / tot_epochs))
     for param_group in optimizer.param_groups:
         param_group["lr"] = cur_lr
+
+
+def visualize_embeddings(encoder, epoch_num):
+    embeddings = encoder.embeddings.weight
+    embeddings = torch.tensor.numpy(embeddings)
+
+    tsne = TSNE(random_state=1, n_iter=1500, metric="cosine")
+
+    embs1 = tsne.fit_transform(embeddings)
+    # embs2 = tsne.fit_transform(x2)
+    df = pd.DataFrame(data={"x": embs1[:, 0], "y": embs1[:, 1]})
+
+    plot = sns.lmplot("x", "y", data=df, fit_reg="false", scatter_kws={"s": 2})
+
+    # ax2.set_title("Embedding 2")
+    # ax2.set_xlabel("x")
+    # ax2.set_ylabel("y")
+
+    plot.savefig(f"embeddings/embedding_map_epoch{epoch_num}.png")
 
 
 if __name__ == "__main__":
