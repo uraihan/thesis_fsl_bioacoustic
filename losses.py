@@ -66,17 +66,19 @@ class SupConLoss(
         loss1 = -mean_log_prob_pos
         loss1 = loss1.view(contrast_count, batch_size).mean()
 
-        if args.args.loss == "scl-orig":
-            return loss1
-
         loss2 = amc(self.device, contrast_feature, labels)
         # loss2 = amc(self.device, contrast_feature)
+
+        if args.args.loss == "scl-orig":
+            return loss1
+        if args.args.loss == "acl":
+            return loss2
 
         alpha = 0.5
 
         loss = alpha * loss1 + (1 - alpha) * loss2
 
-        return loss2
+        return loss
 
 
 def amc(device, features, labels):
