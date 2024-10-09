@@ -46,13 +46,18 @@ def train_scl(encoder, train_loader, transform1, transform2, args):
             x = x.to(args.device)
             y = y.to(args.device)
 
-            x1 = transform1(x)
-            x2 = transform2(x)
+            if args.args.loss == "acl":
+                _, x_out1 = encoder(x)
+                x_out2 = torch.clone(x_out1)
 
-            _, x_out1 = encoder(x1)
-            _, x_out2 = encoder(x2)
+            else:
+                x1 = transform1(x)
+                x2 = transform2(x)
 
-            visualize_embeddings(x_out1.detach(), x_out2.detach(), y)
+                _, x_out1 = encoder(x1)
+                _, x_out2 = encoder(x2)
+
+            # visualize_embeddings(x_out1.detach(), x_out2.detach(), y)
 
             # 1. check only angular
             # 2. check values of each angular and contrastive
@@ -78,7 +83,7 @@ def train_scl(encoder, train_loader, transform1, transform2, args):
         print("Average train loss: {}".format(tr_loss))
         print(f"Train loss history: {loss_hist}")
 
-        visualize_embeddings(encoder, epoch)
+        # visualize_embeddings(encoder, epoch)
 
     torch.save({"encoder": encoder.state_dict()}, last_model_path)
 
